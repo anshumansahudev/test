@@ -1,3 +1,137 @@
+/* =====================================================================
+   LEAF INTRO (opening animation). Runs first, on its own, so the site code
+   below can never stop it. It removes itself when finished.
+   ===================================================================== */
+/*
+  Leaf intro – opening only.
+  Draws a three-leaf sprig (centre leaf plus one on each side, unfurling), scans it with a beam of light, then splits open along the midrib to reveal whatever page is underneath.
+  Events on document:  "leafintro:open"  (split starts)  and  "leafintro:done"  (intro removed).
+  API:  LeafIntro.play()  /  LeafIntro.open()
+  Script tag options:  data-auto="false" (don't play on load)   data-once="true" (play once per browser session)
+  There is no button: when the drawing finishes the leaf splits open by itself (Esc skips ahead).
+*/
+(function(){
+  var tag=document.currentScript;
+  var opt=function(k,d){return tag&&tag.dataset[k]!==undefined?tag.dataset[k]:d};
+  var gate,isOpen=false,prevOverflow='';
+
+  // ---- the sprig: centre leaf draws first, then both side leaves: upper edges together, then lower edges, then veins ----
+  var CL='M180 8 C262 90 282 240 180 330 C78 240 98 90 180 8Z';   // leaf outline, base at (180,330)
+  var RE='M180 330 C282 240 262 90 180 8';                        // right edge, base to tip
+  var LE='M180 330 C78 240 98 90 180 8';                          // left edge, base to tip
+  var K=.65;      // speed: lower is faster, scales every delay and duration
+  var SIDE=3.0;                                                   // when the side leaves start (centre leaf is done by then)
+
+  // half-width of the leaf at height y, so every vein can be kept inside the outline
+  var EDGE=[];
+  for(var q=0;q<=1;q+=.005){var u=1-q;
+    EDGE.push([u*u*u*8+3*u*u*q*90+3*u*q*q*240+q*q*q*330, u*u*u*180+3*u*u*q*262+3*u*q*q*282+q*q*q*180]);}
+  function hw(y){
+    for(var i=1;i<EDGE.length;i++){
+      if(EDGE[i][0]>=y){var a=EDGE[i-1],b=EDGE[i],k=(y-a[0])/((b[0]-a[0])||1);return a[1]+(b[1]-a[1])*k-180;}
+    }
+    return 0;
+  }
+
+  function ln(d,delay,dur,cls){
+    return '<path '+(cls?'class="'+cls+'" ':'')+'pathLength="1" style="--d:'+(delay*K).toFixed(2)+'s;--t:'+(dur*K).toFixed(2)+'s" d="'+d+'"/>';
+  }
+  function solid(d,delay,cls){return '<path class="'+cls+'" style="--d:'+(delay*K).toFixed(2)+'s" d="'+d+'"/>'}
+
+  // curved veins that sweep up and out, each ending a few units inside the outline
+  function veins(d0,pairs,step,dur){
+    var s='';
+    for(var i=0;i<pairs;i++){
+      var y=78+i*(204/(pairs-1)),ye=y-26,w=hw(ye);
+      if(w<16)continue;
+      [-1,1].forEach(function(sd){
+        s+=ln('M'+(180+sd*4)+' '+y.toFixed(1)+' Q'+(180+sd*w*.35).toFixed(1)+' '+(y-2).toFixed(1)+' '+(180+sd*(w-8)).toFixed(1)+' '+ye.toFixed(1),d0+i*step,dur,'v');
+      });
+    }
+    return s;
+  }
+
+  // side leaf: same leaf, smaller, tilted out. Upper edge first, lower edge second, then centre line and veins.
+  function side(ang,d0){
+    var upper=ang<0?RE:LE,lower=ang<0?LE:RE;
+    return '<g transform="translate(180 330) rotate('+ang+') scale(.8) translate(-180 -330)">'+
+      '<g class="li-swing" style="--rot:'+(ang<0?28:-28)+'deg;--d:'+(d0*K).toFixed(2)+'s">'+
+      solid(CL,d0+1.8,'fill')+
+      ln(upper,d0,.9,'o')+ln(lower,d0+.9,.9,'o')+
+      ln('M180 330 V8',d0+1.5,1,'')+
+      veins(d0+1.7,7,.08,.6)+'</g></g>';
+  }
+  var centre=solid(CL,0,'occ')+solid(CL,1.6,'fill')+ln(CL,0,2.2,'o')+ln('M180 8 V330',.6,1.4)+
+             veins(.9,9,.12,.8)+ln('M180 330 V402',.6,.9);
+  var sprig=side(-38,SIDE)+side(38,SIDE)+centre;
+
+  // ---- scan: once the leaf is drawn, a beam of light sweeps down it (only inside the leaf shapes) ----
+  var DRAWN=(SIDE+1.7+6*.08+.6)*K;   // seconds until the last vein has drawn
+  var SCAN=1;                         // seconds the beam takes to cross the leaf
+  function build(id){
+    var T1='translate(180 330) rotate(-38) scale(.8) translate(-180 -330)',T2=T1.replace('-38','38');
+    var d=DRAWN.toFixed(2),line='style="fill:var(--li-line)"';
+    return '<defs>'+
+        '<clipPath id="li-c'+id+'"><path d="'+CL+'"/><path transform="'+T1+'" d="'+CL+'"/><path transform="'+T2+'" d="'+CL+'"/></clipPath>'+
+        '<linearGradient id="li-g'+id+'" x1="0" y1="0" x2="0" y2="1">'+
+          '<stop offset="0" style="stop-color:var(--li-line);stop-opacity:0"/>'+
+          '<stop offset="1" style="stop-color:var(--li-line);stop-opacity:.45"/></linearGradient>'+
+      '</defs>'+
+      sprig+
+      '<g clip-path="url(#li-c'+id+')"><g class="li-scan" style="animation-delay:'+d+'s">'+
+        '<rect x="-20" y="-80" width="400" height="80" fill="url(#li-g'+id+')"/>'+
+        '<rect x="-20" y="-1.5" width="400" height="3" '+line+'/></g></g>'+
+      '<g class="li-scan" style="animation-delay:'+d+'s"><rect x="-3000" y="-.5" width="6600" height="1" '+line+' opacity=".25"/></g>';
+  }
+
+  function fire(name){document.dispatchEvent(new CustomEvent(name))}
+
+  function play(){
+    if(gate)return;
+    isOpen=false;
+    gate=document.createElement('div');gate.className='li-gate';gate.setAttribute('aria-hidden','true');
+    ['l','r'].forEach(function(side){
+      var half=document.createElement('div');half.className='li-half '+side;
+      half.innerHTML='<div class="li-scene"><svg viewBox="0 0 360 420" role="presentation">'+build(side)+'</svg></div>';
+      gate.appendChild(half);
+    });
+    document.body.appendChild(gate);
+    prevOverflow=document.documentElement.style.overflow;
+    document.documentElement.style.overflow='hidden';   // no scrolling behind the intro
+    // open on its own once the scan has swept the finished leaf
+    setTimeout(open,(DRAWN+SCAN+.25)*1000);
+  }
+
+  function open(){
+    if(!gate||isOpen)return;
+    isOpen=true;
+    gate.classList.add('open');
+    fire('leafintro:open');
+    setTimeout(function(){
+      gate.remove();gate=null;
+      document.documentElement.style.overflow=prevOverflow;
+      fire('leafintro:done');
+    },1900);
+  }
+
+  addEventListener('keydown',function(e){if(e.key==='Escape')open()});
+  window.LeafIntro={play:play,open:open};
+
+  function start(){
+    if(opt('auto','true')==='false')return;
+    if(opt('once','false')==='true'){
+      try{if(sessionStorage.getItem('leafintro'))return;sessionStorage.setItem('leafintro','1')}catch(e){}
+    }
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){fire('leafintro:done');return}
+    play();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
+})();
+
+
+/* =====================================================================
+   PLANTVISION APP
+   ===================================================================== */
 const input = document.querySelector('#file-input'),
   zone = document.querySelector('#upload-zone'),
   selected = document.querySelector('#selected-file'),
