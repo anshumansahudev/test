@@ -835,3 +835,38 @@ footer small {
     display: none;
   }
 }
+
+
+/* =====================================================================
+   LEAF INTRO (opening animation) - everything below is prefixed "li-"
+   Override --li-gate / --li-line on :root to recolour it.
+   ===================================================================== */
+/* Leaf intro – opening only. Override these on :root to match your brand. */
+:root{--li-gate:#2C5E3A;--li-line:#E6EFD6;--li-focus:#E9D98B}
+
+.li-gate{position:fixed;inset:0;z-index:99999}
+.li-half{position:absolute;top:0;bottom:0;width:50%;overflow:hidden;background:var(--li-gate);
+  transition:transform 1.5s cubic-bezier(.77,0,.18,1)}
+.li-half.l{left:0}.li-half.r{right:0}
+.li-scene{position:absolute;top:0;height:100%;width:200%;display:grid;place-items:center}
+.li-half.l .li-scene{left:0}.li-half.r .li-scene{right:0}
+.li-scene svg{height:min(68vh,100vw);width:auto;overflow:visible}
+.li-scene path{fill:none;stroke:var(--li-line);stroke-width:2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;
+  animation:li-draw var(--t,1.6s) var(--d,0s) ease-out forwards}
+.li-scene path.fill{fill:rgba(230,239,214,.08);stroke:none;stroke-dasharray:none;stroke-dashoffset:0;opacity:0;
+  animation:li-fade 1.6s var(--d,1.6s) forwards}
+.li-scene path.o{stroke-width:2.2}
+.li-scene path.v{stroke-width:1.5}
+.li-scene path.occ{fill:var(--li-gate);stroke:none;stroke-dasharray:none;stroke-dashoffset:0;opacity:0;animation:li-fade .01s var(--d,0s) forwards}
+.li-swing{transform-origin:180px 330px;animation:li-swing 1.2s var(--d,0s) cubic-bezier(.2,.8,.2,1) both}
+@keyframes li-swing{from{transform:rotate(var(--rot))}to{transform:none}}
+.li-scan{animation:li-scan 1s ease-in-out both}
+@keyframes li-scan{0%{transform:translateY(-90px);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translateY(440px);opacity:0}}
+.li-gate.open .l{transform:translateX(-101%)}
+.li-gate.open .r{transform:translateX(101%)}
+.li-gate.open .li-half{box-shadow:0 0 60px rgba(0,0,0,.35)}
+.li-gate.open{pointer-events:none}
+
+@keyframes li-draw{to{stroke-dashoffset:0}}
+@keyframes li-fade{to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.li-scene path{animation-duration:.01s;animation-delay:0s}.li-swing{animation:none}.li-scan{display:none}.li-half{transition-duration:.01s}}
