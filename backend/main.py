@@ -1,5 +1,10 @@
 from io import BytesIO
 import base64
+import asyncio
+import json
+import os
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 import cv2
 import numpy as np
@@ -641,3 +646,70 @@ async def create_report(
                 f"{str(error)}"
             )
         )
+
+# =========================================================
+# ELEVENLABS REPORT NARRATION
+# =========================================================
+
+@app.post("/report-audio")
+async def create_report_audio(payload: dict):
+    """Generate speech for a localized report narration."""
+    text = payload.get("text", "")
+    language = payload.get("language", "en")
+
+    if not isinstance(text, str) or not text.strip() or len(text) > 1900:
+        raise HTTPException(
+            status_code=400,
+            detail="Narration text must be between 1 and 1900 characters."
+        )
+
+    language_codes = {"en": "en", "hi": "hi", "or": "or", "bn": "bn"}
+    if language not in language_codes:
+        raise HTTPException(status_code=400, detail="Unsupported narration language.")
+
+    api_key = os.getenv("ELEVENLABS_API_KEY")
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Speech is not configured. Add ELEVENLABS_API_KEY to the service environment."
+        )
+
+    voice_id = os.getenv("ELEVENLABS_VOICE_ID", "JBFqnCBsd6RMkjVDRZzb")
+    request_body = json.dumps({
+        "inputs": [{"text": text.strip(), "voice_id": voice_id}],
+        "model_id": "eleven_v4",
+        "language_code": language_codes[language],
+        "apply_text_normalization": "auto"
+    }).encode("utf-8")
+    request = Request(
+        "https://api.elevenlabs.io/v1/text-to-dialogue?output_format=mp3_44100_128",
+        data=request_body,
+        headers={
+            "xi-api-key": api_key,
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    def fetch_audio():
+        with urlopen(request, timeout=90) as response:
+            return response.read()
+
+    try:
+        audio = await asyncio.to_thread(fetch_audio)
+    except HTTPError as error:
+        raise HTTPException(
+            status_code=502,
+            detail=f"ElevenLabs rejected the speech request (HTTP {error.code}). Check the configured voice and account."
+        )
+    except (URLError, TimeoutError):
+        raise HTTPException(
+            status_code=502,
+            detail="Could not reach ElevenLabs. Try again shortly."
+        )
+
+    return Response(
+        content=audio,
+        media_type="audio/mpeg",
+        headers={"Content-Disposition": 'inline; filename="plantvision-report.mp3"'}
+    )
