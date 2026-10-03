@@ -880,3 +880,27 @@ footer small {
 .report-audio-player {
   width: 100%;
 }
+
+.rewards-card { border-color: rgba(111, 202, 147, .3); }
+.rewards-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+.rewards-heading h2 { margin-bottom: 8px; }
+.coin-balance { min-width: 120px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px; text-align: center; background: rgba(111, 202, 147, .08); }
+.coin-balance strong, .coin-balance span { display: block; }
+.coin-balance strong { color: #a7ebc0; font: 700 27px Outfit, sans-serif; }
+.coin-balance span, .coupon span, .reward-result span { color: var(--muted); font-size: 12px; }
+.reward-result { display: flex; justify-content: space-between; align-items: center; margin: 18px 0 12px; padding: 14px 16px; border-radius: 12px; background: var(--bg); }
+.reward-result strong { color: #a7ebc0; }
+.rewards-card > .primary-action { width: auto; min-width: 190px; }
+.reward-note { margin-top: 12px; font-size: 12px; }
+.coupon-grid { display: grid; gap: 10px; margin-top: 12px; }
+.coupon { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 12px; }
+.coupon strong, .coupon span { display: block; }
+.coupon span { margin-top: 4px; }
+.coupon .secondary-action { white-space: nowrap; }
+.secondary-action:disabled, .primary-action:disabled { opacity: .55; cursor: not-allowed; }
+.reward-message { min-height: 1.3em; color: #a7ebc0; font-size: 13px; }
+@media (max-width: 600px) {
+  .rewards-heading, .coupon { align-items: stretch; flex-direction: column; }
+  .coin-balance { align-self: flex-start; }
+  .rewards-card > .primary-action, .coupon .secondary-action { width: 100%; }
+}
