@@ -304,10 +304,66 @@ function render(data) {
     h = data.health_guidance;
   diagnosisPanel.innerHTML = `<div class="result-header"><div><span class="eyebrow">${t('aiDiagnosis')}</span><h2 class="prediction-name">${esc(p.disease)}</h2><p class="muted">${esc(p.message)}</p></div><span class="badge">${esc(p.confidence_status)} ${t('confidence')}</span></div><div class="metric-grid"><div class="metric"><span>${t('detectedPlant')}</span><strong>${esc(p.plant)}</strong></div><div class="metric"><span>${t('confidence')}</span><strong>${Number(p.confidence).toFixed(2)}%</strong></div><div class="metric"><span>${t('affectedArea')}</span><strong>${Number(v.affected_percentage).toFixed(2)}%</strong></div></div>`;
   diagnosisPanel.classList.remove('hidden');
-  results.innerHTML = `<div class="results-grid"><article class="result-card"><span class="eyebrow">${t('predictionRanking')}</span><h2>${t('topPredictions')}</h2><div class="top-list">${data.top_predictions.map((x,i)=>`<div class="top-item"><div><strong>#${i+1} · ${esc(x.disease)}</strong><small>${esc(x.plant)}</small></div><strong>${Number(x.confidence).toFixed(2)}%</strong></div>`).join('')}</div></article><article class="result-card tips"><div class="tips-leaf">${leafIcon}</div><h2>${t('betterResults')}</h2><ul><li>${t('clearImage')}</li><li>${t('inFocus')}</li><li>${t('avoidBlur')}</li><li>${t('supportedSpecies')}</li></ul></article><article class="result-card full"><span class="eyebrow">${t('visualAnalysis')}</span><h2>${t('regionAnalysis')}</h2><div class="image-grid"><figure><img src="${v.original_image}" alt="${t('originalLeaf')}"><figcaption>${t('originalLeaf')}</figcaption></figure><figure><img src="${v.leaf_mask}" alt="${t('detectedRegion')}"><figcaption>${t('detectedRegion')}</figcaption></figure><figure><img src="${v.affected_mask}" alt="${t('abnormalRegions')}"><figcaption>${t('abnormalRegions')}</figcaption></figure></div><p class="muted">${esc(v.note)}</p></article><article class="result-card full"><span class="eyebrow">${t('explainable')}</span><h2>${t('modelFocus')}</h2><div class="image-grid"><figure><img src="${g.heatmap}" alt="${t('heatmap')}"><figcaption>${t('heatmap')}</figcaption></figure><figure><img src="${g.overlay}" alt="${t('overlay')}"><figcaption>${t('overlay')}</figcaption></figure></div><p class="muted">${esc(g.note)}</p></article><article class="result-card full"><span class="eyebrow">${t('guidance')}</span><h2>${t('nextSteps')}</h2><div class="guidance"><div><h3>${t('aboutLabel')}</h3><p>${esc(h.about)}</p></div><div><h3>${t('signs')}</h3><ul>${list(h.common_visual_signs)}</ul></div><div><h3>${t('steps')}</h3><ul>${list(h.suggested_next_steps)}</ul></div></div><div class="actions"><button id="download-report" class="secondary-action" type="button">${t('download')}</button><button id="listen-report" class="secondary-action" type="button">${audioLabel('listen')}</button><audio id="report-audio-player" class="report-audio-player hidden" controls></audio></div></article></div>`;
+  results.innerHTML = `<div class="results-grid"><article class="result-card"><span class="eyebrow">${t('predictionRanking')}</span><h2>${t('topPredictions')}</h2><div class="top-list">${data.top_predictions.map((x,i)=>`<div class="top-item"><div><strong>#${i+1} · ${esc(x.disease)}</strong><small>${esc(x.plant)}</small></div><strong>${Number(x.confidence).toFixed(2)}%</strong></div>`).join('')}</div></article><article class="result-card tips"><div class="tips-leaf">${leafIcon}</div><h2>${t('betterResults')}</h2><ul><li>${t('clearImage')}</li><li>${t('inFocus')}</li><li>${t('avoidBlur')}</li><li>${t('supportedSpecies')}</li></ul></article><article class="result-card full"><span class="eyebrow">${t('visualAnalysis')}</span><h2>${t('regionAnalysis')}</h2><div class="image-grid"><figure><img src="${v.original_image}" alt="${t('originalLeaf')}"><figcaption>${t('originalLeaf')}</figcaption></figure><figure><img src="${v.leaf_mask}" alt="${t('detectedRegion')}"><figcaption>${t('detectedRegion')}</figcaption></figure><figure><img src="${v.affected_mask}" alt="${t('abnormalRegions')}"><figcaption>${t('abnormalRegions')}</figcaption></figure></div><p class="muted">${esc(v.note)}</p></article><article class="result-card full"><span class="eyebrow">${t('explainable')}</span><h2>${t('modelFocus')}</h2><div class="image-grid"><figure><img src="${g.heatmap}" alt="${t('heatmap')}"><figcaption>${t('heatmap')}</figcaption></figure><figure><img src="${g.overlay}" alt="${t('overlay')}"><figcaption>${t('overlay')}</figcaption></figure></div><p class="muted">${esc(g.note)}</p></article><article class="result-card full"><span class="eyebrow">${t('guidance')}</span><h2>${t('nextSteps')}</h2><div class="guidance"><div><h3>${t('aboutLabel')}</h3><p>${esc(h.about)}</p></div><div><h3>${t('signs')}</h3><ul>${list(h.common_visual_signs)}</ul></div><div><h3>${t('steps')}</h3><ul>${list(h.suggested_next_steps)}</ul></div></div><div class="actions"><button id="download-report" class="secondary-action" type="button">${t('download')}</button><button id="listen-report" class="secondary-action" type="button">${audioLabel('listen')}</button><audio id="report-audio-player" class="report-audio-player hidden" controls></audio></div></article><article class="result-card full rewards-card"><span class="eyebrow">LEAF DATA REWARDS · PREVIEW</span><div class="rewards-heading"><div><h2>Help improve plant health data</h2><p class="muted">Your estimated data usefulness is <strong>${rewardEstimate(data).usefulness}%</strong>. A less represented disease and a clear, confident diagnosis earn more points.</p></div><div class="coin-balance"><strong id="coin-balance">${getWallet().coins}</strong><span>leaf coins</span></div></div><div class="reward-result"><span>Estimated reward for this photo</span><strong>+${rewardEstimate(data).coins} coins</strong></div><button id="claim-reward" class="primary-action" type="button">Add preview coins</button><p class="muted reward-note">Preview only: points are stored in this browser. Images are not checked for duplicates, and these sample offers are not sponsored or redeemable with real brands.</p><h3>Sample farm offers</h3><div class="coupon-grid">${renderCoupons()}</div><p id="reward-message" class="reward-message" aria-live="polite"></p></article></div>`;
   latestAnalysis = data;
   document.querySelector('#download-report').addEventListener('click', download);
   document.querySelector('#listen-report').addEventListener('click', () => listenReport(data))
+  document.querySelector('#claim-reward').addEventListener('click', () => claimPreviewReward(data));
+  document.querySelectorAll('[data-coupon]').forEach(button => button.addEventListener('click', () => redeemPreviewCoupon(button.dataset.coupon)));
+}
+
+const couponOffers = [
+  { id: 'soil-care', name: 'Soil care essentials', discount: '₹50 sample discount', cost: 30 },
+  { id: 'plant-nutrition', name: 'Plant nutrition pack', discount: '10% sample discount', cost: 50 },
+  { id: 'farm-supplies', name: 'Farm supplies', discount: '₹100 sample discount', cost: 80 }
+];
+const walletKey = 'plantvision-rewards-preview';
+function getWallet() {
+  try { return JSON.parse(localStorage.getItem(walletKey)) || { coins: 0, claims: [], redeemed: [] }; }
+  catch { return { coins: 0, claims: [], redeemed: [] }; }
+}
+function saveWallet(wallet) { localStorage.setItem(walletKey, JSON.stringify(wallet)); }
+function rewardEstimate(data) {
+  const confidence = Math.max(0, Math.min(100, Number(data.prediction.confidence) || 0));
+  const disease = String(data.prediction.disease || '').toLowerCase();
+  const isHealthy = disease.includes('healthy');
+  const uncommon = /mosaic|rust|scab|black rot|bacterial|leaf spot/.test(disease);
+  const usefulness = Math.round(confidence * (isHealthy ? .35 : uncommon ? .9 : .65));
+  return { usefulness, coins: Math.round(usefulness / 10) };
+}
+function renderCoupons() {
+  const wallet = getWallet();
+  return couponOffers.map(offer => {
+    const redeemed = wallet.redeemed.find(item => item.id === offer.id);
+    return `<div class="coupon"><div><strong>${esc(offer.name)}</strong><span>${esc(offer.discount)} · ${offer.cost} coins</span></div><button class="secondary-action" type="button" data-coupon="${offer.id}" ${wallet.coins < offer.cost || redeemed ? 'disabled' : ''}>${redeemed ? 'Code: ' + esc(redeemed.code) : 'Get sample code'}</button></div>`;
+  }).join('');
+}
+function claimPreviewReward(data) {
+  const wallet = getWallet(), estimate = rewardEstimate(data);
+  const claimId = `${data.prediction.class}:${data.prediction.confidence}:${data.visual_analysis.affected_percentage}`;
+  const message = document.querySelector('#reward-message');
+  if (wallet.claims.includes(claimId)) { message.textContent = 'Preview reward already added for this result.'; return; }
+  wallet.claims.push(claimId);
+  wallet.coins += estimate.coins;
+  saveWallet(wallet);
+  document.querySelector('#coin-balance').textContent = wallet.coins;
+  document.querySelector('#claim-reward').disabled = true;
+  document.querySelector('#claim-reward').textContent = 'Preview coins added';
+  document.querySelectorAll('[data-coupon]').forEach(button => { if (wallet.coins >= couponOffers.find(x => x.id === button.dataset.coupon).cost) button.disabled = false; });
+  message.textContent = `Added ${estimate.coins} preview coins to this browser.`;
+}
+function redeemPreviewCoupon(id) {
+  const wallet = getWallet(), offer = couponOffers.find(item => item.id === id);
+  const message = document.querySelector('#reward-message');
+  if (!offer || wallet.coins < offer.cost || wallet.redeemed.some(item => item.id === id)) return;
+  const code = `PREVIEW-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  wallet.coins -= offer.cost;
+  wallet.redeemed.push({ id, code });
+  saveWallet(wallet);
+  document.querySelector('#coin-balance').textContent = wallet.coins;
+  document.querySelector('.coupon-grid').innerHTML = renderCoupons();
+  document.querySelectorAll('[data-coupon]').forEach(button => button.addEventListener('click', () => redeemPreviewCoupon(button.dataset.coupon)));
+  message.textContent = `Sample code ${code} generated. It is not valid with a real retailer.`;
 }
 function makeReportNarration(data) {
   const p = data.prediction, v = data.visual_analysis, h = data.health_guidance;
